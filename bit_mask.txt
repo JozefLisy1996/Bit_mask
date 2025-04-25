@@ -1,0 +1,145 @@
+1. Konfigurácia GPIO pinu na výstup a nastavenie jeho stavu
+2. Čítanie stavu vstupného pinu a maskovanie nepotrebných bitov
+4. Nastavenie konkrétneho bitu v konfigurácii UART modulu
+7. Extrakcia dát z ADC registra s bitovým posunom
+8. Kombinácia viacerých flagov v registri pomocou bitového OR
+9. Invertovanie polarity signálu v ovládacom registri
+
+
+Komplexné zadanie: Bitové operácie pre fiktívne embedded zariadenie
+Popis zariadenia
+Vyvíjate firmvér pre fiktívne Inteligentné riadenie senzorov (SSC), mikrokontrolérom riadené embedded zariadenie používané na monitorovanie a ovládanie environmentálnych senzorov a aktuátorov v skleníku.
+SSC komunikuje s rôznymi perifériami (napr. teplotný senzor, senzor vlhkosti, aktuátory ako ventilátory alebo LED) cez registre mapované v pamäti. Firmvér je konzolová aplikácia simulujúca správanie zariadenia,
+kde vstupy sú poskytované používateľom (napr. hodnoty registrov alebo stavy senzorov) a výstupy sú vypisované do konzoly (napr. stavy registrov alebo vykonané akcie).
+
+SSC má Riadiaci register (CR), Stavový register (SR) a Dátový register (DR), každý so šírkou 16 bitov. Vašou úlohou je implementovať funkcie, ktoré manipulujú s týmito registrami pomocou bitových operácií na konfiguráciu periférií,
+čítanie stavov senzorov a spracovanie dát, inšpirované vybranými príkladmi (1, 2, 4, 7, 8, 9).
+
+Funkčné požiadavky
+Konzolová aplikácia musí simulovať nasledujúce operácie na SSC:
+
+1. Konfigurácia GPIO pinu (Inšpirované príkladom 1)
+ > Úloha: Nakonfigurujte špecifické piny ako vstupy alebo výstupy v Riadiacom registri (CR).
+ > Podrobnosti:
+    Bity 0–3 v CR reprezentujú piny P0–P3 (0 = vstup, 1 = výstup).
+    Implementujte funkciu na nastavenie špecifického pinu ako výstup a nastavenie jeho stavu (vysoký/nízky) pomocou bitových operácií (napr. |= na nastavenie, &= na vynulovanie).
+    * Príklad: Nastavenie P2 ako výstup a vysoký stav nastaví bit 2 na 1 (výstup) a bit 10 na 1 (vysoký stav, viď detaily stavu pinov nižšie).
+
+2. Čítanie stavu vstupného pinu (Inšpirované príkladom 2)
+ > Úloha: Prečítajte stav vstupného pinu zo Stavového registra (SR) a maskujte nepotrebné bity.
+ > Podrobnosti:
+    Bity 0–3 v SR reprezentujú stavy pinov P0–P3 (0 = nízky, 1 = vysoký).
+    Použite bitové maskovanie (&) na extrakciu stavu špecifického pinu a ignorujte ostatné bity.
+    * Príklad: Na prečítanie stavu P1 maskujte SR s 0x0002 na kontrolu bitu 1.
+
+3. Konfigurácia UART modulu (Inšpirované príkladom 4)
+ > Úloha: Nakonfigurujte UART modul nastavením špecifického bitu v Riadiacom registri (CR).
+ > Podrobnosti:
+    Bit 4 v CR zapína/vypína UART modul (0 = vypnutý, 1 = zapnutý).
+    Implementujte funkciu na zapnutie alebo vypnutie UART pomocou bitových operácií (|= na zapnutie, &= na vypnutie).
+    * Príklad: Zapnutie UART nastaví bit 4 na 1 bez ovplyvnenia ostatných bitov.
+
+4. Extrakcia ADC dát (Inšpirované príkladom 7)
+ > Úloha: Extrahujte 10-bitovú ADC hodnotu z Dátového registra (DR) pomocou bitového posunu.
+ > Podrobnosti:
+    Bity 0–9 v DR obsahujú 10-bitovú ADC hodnotu z teplotného senzora.
+    Použite pravý posun (>>) a maskovanie (&) na extrakciu hodnoty ako desiatkové číslo.
+    * Príklad: Ak DR = 0x03FF, extrahujte 1023 (všetkých 10 bitov nastavených).
+
+5. Kombinácia vlajok (Inšpirované príkladom 8)
+ > Úloha: Skombinujte viaceré stavové vlajky v Stavovom registri (SR) na hlásenie stavu systému.
+ > Podrobnosti:
+    Bity 8–11 v SR reprezentujú vlajky: Prehriatie (bit 8), Nízka batéria (bit 9), Chyba senzora (bit 10) a Aktívny ventilátor (bit 11).
+    Použite bitové OR (|) na skombinovanie aktívnych vlajok do jednej hodnoty pre hlásenie.
+    * Príklad: Ak sú nastavené Prehriatie a Aktívny ventilátor, skombinujte vlajky na výstup špecifického stavového kódu.
+
+6. Invertovanie polarity signálu (Inšpirované príkladom 9)
+ > Úloha: Invertujte polaritu signálov aktuátorov v Riadiacom registri (CR).
+ > Podrobnosti:
+    Bity 8–11 v CR ovládajú polaritu aktuátorov A0–A3 (0 = normálna, 1 = invertovaná).
+    Použite XOR (^) na prepnutie polarity špecifického aktuátora bez ovplyvnenia ostatných.
+    * Príklad: Prepínanie polarity A1 prepne bit 9.
+
+Dodatočné poznámky
+    Stavy pinov: Bity 8–11 v CR reprezentujú výstupné stavy pinov P0–P3, keď sú nakonfigurované ako výstupy (napr. bit 8 pre stav P0, bit 9 pre stav P1 atď.).
+    
+    Simulácia: Konzolová aplikácia by mala vyzvať používateľa na zadanie počiatočných hodnôt registrov (CR, SR, DR) ako hexadecimálne čísla a umožniť príkazy na vykonanie vyššie uvedených operácií.
+    
+    Výstup: Po každej operácii vypíšte aktualizované hodnoty registrov (v hex) a akékoľvek relevantné výsledky (napr. ADC hodnota, stav vlajok, stav pinu).
+    
+    
+Príklady vstupu/výstupu
+
+Príklad 1: Konfigurácia P1 ako výstup a nastavenie na vysoký stav
+ > Vstup:
+    Počiatočný CR = 0x0000
+    Príkaz: Nastav P1 ako výstup a vysoký stav
+ > Operácia:
+    Nastav bit 1 na 1 (P1 ako výstup): CR |= 0x0002
+    Nastav bit 9 na 1 (P1 vysoký): CR |= 0x0200
+ > Výstup:
+    Aktualizovaný CR = 0x0202
+    Správa: "P1 nakonfigurovaný ako výstup a nastavený na vysoký stav"
+
+Príklad 2: Čítanie stavu P2
+ > Vstup:
+    Počiatočný SR = 0x0005 (P0 a P2 vysoké)
+    Príkaz: Prečítaj stav P2
+ > Operácia:
+    Maskuj SR s 0x0004 na kontrolu bitu 2
+ > Výstup:
+    Správa: "Stav P2: Vysoký"
+
+Príklad 3: Zapnutie UART
+ > Vstup:
+    Počiatočný CR = 0x0000
+    Príkaz: Zapni UART
+ > Operácia:
+    Nastav bit 4 na 1: CR |= 0x0010
+ > Výstup:
+    Aktualizovaný CR = 0x0010
+    Správa: "UART zapnutý"
+
+Príklad 4: Extrakcia ADC hodnoty
+ > Vstup:
+    Počiatočný DR = 0x01FF
+    Príkaz: Extrahuj ADC hodnotu
+ > Operácia:
+    Maskuj DR s 0x03FF na získanie bitov 0–9
+ > Výstup:
+    ADC hodnota: 511
+    Správa: "ADC hodnota: 511"
+
+Príklad 5: Kombinácia vlajok
+ > Vstup:
+    Počiatočný SR = 0x0900 (nastavené Prehriatie a Chyba senzora)
+    Príkaz: Hlásenie vlajok
+ > Operácia:
+    Maskuj SR s 0x0F00 a posuň doprava o 8 na získanie bitov vlajok
+ > Výstup:
+    Správa: "Aktívne vlajky: Prehriatie, Chyba senzora"
+
+Príklad 6: Invertovanie polarity A2
+ > Vstup:
+    Počiatočný CR = 0x0000
+    Príkaz: Invertuj polaritu A2
+ > Operácia:
+    XOR bit 10 s 1: CR ^= 0x0400
+ > Výstup:
+    Aktualizovaný CR = 0x0400
+    Správa: "Polarita A2 invertovaná"
+
+Pokyny na implementáciu
+ > Použite uint16_t pre premenné registrov na zaistenie 16-bitovej presnosti.
+ > Implementujte samostatné funkcie pre každú operáciu (napr. configurePin, readPinState atď.).
+ > Použite bitové operácie (|, &, ^, >>, <<) na manipuláciu s bitmi registrov.
+ > Simulujte aktualizácie registrov v pamäti a vypisujte výsledky do konzoly.
+ > Overujte vstupy používateľa (napr. zabezpečte platné čísla pinov alebo hodnoty registrov).
+ > Poskytnite jednoduché menu riadené rozhranie na výber operácií.
+
+Cieľ úlohy
+Napíšte konzolový program v jazyku C, ktorý simuluje operácie registrov SSC, ako je opísané. Program by mal:
+ > Prijať počiatočné hodnoty registrov (CR, SR, DR) ako hexadecimálne vstupy.
+ > Poskytnúť menu na výber operácií (napr. "1. Konfigurácia pinu", "2. Čítanie stavu pinu" atď.).
+ > Vykonať vybranú operáciu pomocou bitových manipulácií.
+ > Zobraziť aktualizované hodnoty registrov a výsledky operácií.
